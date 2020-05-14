@@ -1,0 +1,76 @@
+version: '3.7'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.1
+    networks:
+      - skynet
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+      #- /mnt/hidrive/elasticsearch:/usr/share/elasticsearch/data
+    environment:
+      http.host: 0.0.0.0
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms750m -Xmx750m"
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.elasticsearch.rule=Host(`elasticsearch.qaybe.de`)"
+        - "traefik.http.routers.elasticsearch.entrypoints=websecure"
+        - "traefik.http.routers.elasticsearch.tls.certresolver=sec"
+        - "traefik.http.services.elasticsearch-bar.loadbalancer.server.port=9200"
+      placement:
+        constraints: [node.hostname == titan.marcelbenders.de]
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.4.1
+    networks:
+        - skynet
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.logstash.rule=Host(`logs.qaybe.de`)"
+        - "traefik.http.services.logstash-service.loadbalancer.server.port=5044"
+        - "traefik.http.routers.logstash.tls.certresolver=sec"
+        - "traefik.http.routers.logstash.entrypoints=websecure"
+      placement:
+        constraints: [node.hostname == titan.marcelbenders.de]
+    environment:
+      ELASTICSEARCH_HOSTS: elasticsearch
+    volumes:
+      #- /home/marcel/logstash:/usr/share/logstash/pipeline
+      - /mnt/hidrive/logstash:/usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.4.1
+    networks:
+      - skynet
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.kibana-mapping.loadbalancer.server.port=5601"
+        - "traefik.http.routers.kibana-https.entrypoints=websecure"
+        - "traefik.http.routers.kibana-https.rule=Host(`kibana.qaybe.de`)"
+        - "traefik.http.routers.kibana-https.tls.certresolver=sec"
+        - "traefik.http.middlewares.auth-kibana.basicauth.users=YfUMJm9EmL9Y:$$apr1$$UHVO9VEB$$n1xxcaDO6pjrTrvJzMXqx0"
+        - "traefik.http.routers.kibana-https.middlewares=auth-kibana"
+      placement:
+        constraints: [node.hostname == titan.marcelbenders.de]
+
+    volumes:
+      - kibana_volume:/usr/share/kibana
+    #- "/mnt/hidrive/kibana/:/usr/share/kibana/"
+    depends_on:
+      - elasticsearch
+      - logstash
+
+volumes:
+  kibana_volume:
+  esdata1:
+      #filebeat_containers:
+
+networks:
+  skynet:
+    external: true
