@@ -6,18 +6,11 @@ services:
       - skynet
     volumes:
       - esdata1:/usr/share/elasticsearch/data
-      #- /mnt/hidrive/elasticsearch:/usr/share/elasticsearch/data
     environment:
       http.host: 0.0.0.0
       discovery.type: single-node
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
     deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.elasticsearch.rule=Host(`elasticsearch.qaybe.de`)"
-        - "traefik.http.routers.elasticsearch.entrypoints=websecure"
-        - "traefik.http.routers.elasticsearch.tls.certresolver=sec"
-        - "traefik.http.services.elasticsearch-bar.loadbalancer.server.port=9200"
       placement:
         constraints: [node.hostname == titan.marcelbenders.de]
 
