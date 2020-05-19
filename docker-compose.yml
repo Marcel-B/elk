@@ -75,8 +75,11 @@ services:
     user: root
     volumes:
       - /home/marcel/filebeat.docker.yml:/usr/share/filebeat/filebeat.docker.yml
+      - /home/marcel/filebeat.titan.yml:/usr/share/filebeat/filebeat.yml  
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/lib/docker:/var/lib/docker:ro
+
     depends_on:
       - elasticsearch
       - logstash
@@ -96,8 +99,10 @@ services:
     user: root
     volumes:
       - /home/marcel/filebeat.docker.yml:/usr/share/filebeat/filebeat.docker.yml
+      - /home/marcel/filebeat.yml:/usr/share/filebeat/filebeat.yml  
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/lib/docker:/var/lib/docker:ro
     depends_on:
       - elasticsearch
       - logstash
